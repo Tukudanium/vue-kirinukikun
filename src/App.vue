@@ -4,9 +4,11 @@ import kirinukikun from './components/kirinukikun.vue'
 import { Ref, ref } from 'vue'
 
 const kirinukiRef = ref()
-const loadImg = (event: any) => {
-    const file = event.target.files[0]
-    kirinukiRef.value.loadImg(file)
+const loadImg = (event: Event) => {
+    if (event.target instanceof HTMLInputElement && event.target.files) {
+        const file = event.target.files[0]
+        kirinukiRef.value.loadImg(file)
+    }
     return
 }
 const cutwidth = ref('300')

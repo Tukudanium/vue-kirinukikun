@@ -35,7 +35,7 @@ const mainCanvasRef: Ref<HTMLCanvasElement | undefined> = ref<HTMLCanvasElement>
 const shadowCanvasRef: Ref<HTMLCanvasElement | undefined> = ref<HTMLCanvasElement>()
 const resultCanvasRef: Ref<HTMLCanvasElement | undefined> = ref<HTMLCanvasElement>()
 
-// 画像受け取り
+// 画像
 const image = new Image()
 
 // 対応fileType
@@ -104,7 +104,9 @@ const setProps = () => {
             parseInt(shadowColor.substring(5, 7), 16) +
             ')'
     }
-    shadowColor = shadowColor.replace(')', ', 0.6)')
+    if (!shadowColor.includes('rgba')) {
+        shadowColor = shadowColor.replace(')', ', 0.6)')
+    }
     shadowCtx.fillStyle = shadowColor
     shadowCtx.clearRect(0, 0, props.width, props.height)
     // 切り取り範囲外に影をつける
@@ -141,6 +143,7 @@ image.onload = () => {
     scaling(null, scal)
 }
 
+// 画像受け取り
 const loadImg = (getImage: Blob | File) => {
     getImage.type
     // imageオブジェクトに読み込む
