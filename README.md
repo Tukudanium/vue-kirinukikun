@@ -94,7 +94,7 @@ await kirinukiRef.value.cropImg('file', 'png')
 
 #### returnType
 
-切り抜いた画像をどのような形で返すかを指定する。
+切り抜いた画像をどのような形で返すかを指定します。
 
 ```bash
 'dataurl', 'base64', 'arraybuffer', 'blob', 'file'
@@ -104,7 +104,7 @@ await kirinukiRef.value.cropImg('file', 'png')
 
 #### fileType
 
-切り抜いた画像をどの拡張子の形式で生成するかを指定する。
+切り抜いた画像をどの拡張子の形式で生成するかを指定します。
 
 ```bash
 'png', 'jpeg', 'jpg', 'bmp'
