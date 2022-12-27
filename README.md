@@ -6,12 +6,12 @@ viteのライブラリモードを利用してvue3のコンポーネントをラ
 
 切り取る枠を固定して、中で画像を拡大縮小したり動かしたりするタイプの、vue用画像切り抜きライブラリ。
 アイコン画像や配信画像等、アスペクト比や画像サイズを固定させたい場合にご利用ください。
-propsをwatchしているので、画面サイズや切り取り枠サイズなどは動的に変更可能です。
+propsをwatchしているので、画面サイズや切り取り枠サイズなどは動的に変更可能です。  
 npm: <https://www.npmjs.com/package/vue-kirinukikun>
 
 ## 利用方法
 
-##### インストール
+#### インストール
 
 ```bash
 npm i vue-kirinukikun
@@ -21,7 +21,7 @@ npm i vue-kirinukikun
 import { kirinukikun } from 'vue-kirinukikun'
 ```
 
-##### 使用例
+#### 使用例
 
 template
 
@@ -62,7 +62,7 @@ const downloadImage = async () => {
 
 ## methods
 
-#### loadImg
+### loadImg
 
 ```bash
 const loadImg: (getImage: Blob | File) => void
@@ -74,13 +74,14 @@ const loadImg: (getImage: Blob | File) => void
 kirinukiRef.value.loadImg(file)
 ```
 
-切り抜きたい画像を読み込む関数です。
+切り抜きたい画像を読み込む関数です。  
 \<input type="file" />　とかで入れてください。
 
-#### cropImg
+### cropImg
 
 ```bash
-async cropImg(returnType: string | 'file', fileType: string | 'png')　=> Promise<string | Blob | File | Uint8Array | null>
+async cropImg(returnType: string | 'file', fileType: string | 'png')
+=> Promise<string | Blob | File | Uint8Array | null>
 ```
 
 呼び出し例
@@ -91,7 +92,7 @@ await kirinukiRef.value.cropImg('file', 'png')
 
 切り抜き枠の範囲内に表示されている画像を切り抜き、指定の形式で返す関数です。
 
-##### returnType
+#### returnType
 
 切り抜いた画像をどのような形で返すかを指定する。
 
@@ -101,7 +102,7 @@ await kirinukiRef.value.cropImg('file', 'png')
 
 のいずれかが指定可能。上記以外の場合、デフォルトはfile。
 
-##### fileType
+#### fileType
 
 切り抜いた画像をどの拡張子の形式で生成するかを指定する。
 
@@ -115,73 +116,73 @@ await kirinukiRef.value.cropImg('file', 'png')
 
 基本的に全てデフォルト値が設定されているので、必須項目はありません。
 
-#### width
+### width
 
-type: number
+type: number  
 default: 500
 
-#### height
+### height
 
-type: number
+type: number  
 default: 500
 
 切り抜く画像を表示する画面のサイズを設定します。
 canvas自体の内部サイズも変化します。
 
-#### resultWidth
+### resultWidth
 
-type: number
+type: number  
 default: 300
 
-#### resultHeight
+### resultHeight
 
-type: number
+type: number  
 default: 200
 
 画像を切り抜くサイズを設定します。
 
-#### backgroundColor
+### backgroundColor
 
-type: string
+type: string  
 default: rgb(150, 150, 150)
 
 切り抜く画像を表示する画面の背景色を設定します。
 RGBと16進数カラーコードが利用できます。
 
-#### shadowColor
+### shadowColor
 
-type: string
+type: string  
 default: rgb(150, 150, 150)
 
 画像を切り抜く枠の範囲外の、網掛けになっている部分の色を設定します。
 RGB、RBGA、16進数カラーコードが利用できます。
 
-#### cutLineColor
+### cutLineColor
 
-type: string
+type: string  
 default: rgb(0, 0, 0)
 
 画像を切り抜く枠線の色を設定します。
 RGB、RBGA、16進数カラーコードが利用できます。
 
-#### cutLineWidth
+### cutLineWidth
 
-type: number
+type: number  
 default: 4
 
 画像を切り抜く枠線の太さを設定します。
 
-#### fitLine
+### fitLine
 
-type: boolean
+type: boolean  
 default: true
 
 この値がtrueの場合、切り抜く画像の端が画像を切り抜く枠線に近い際に、
 枠にぴったりくっつくように動くようになります。
 
-#### fitScal
+### fitScal
 
-type: boolean
+type: boolean  
 default: true
 
 この値がtrueの場合、切り抜く画像を拡大縮小している際に、画像を切り抜く枠の幅と近い場合はぴったりのサイズになります。
