@@ -7,8 +7,8 @@ viteのライブラリモードを利用してvue3のコンポーネントをラ
 切り取る枠を固定して、中で画像を拡大縮小したり動かしたりするタイプの、vue用画像切り抜きライブラリ。
 アイコン画像や配信画像等、アスペクト比や画像サイズを固定させたい場合にご利用ください。
 propsをwatchしているので、画面サイズや切り取り枠サイズなどは動的に変更可能です。  
-npm: <https://www.npmjs.com/package/vue-kirinukikun>
-github: <https://github.com/Tukudanium/vue-kirinukikun>
+npm: <https://www.npmjs.com/package/vue-kirinukikun>  
+github: <https://github.com/Tukudanium/vue-kirinukikun>  
 DEMO: <https://oru5oj.csb.app/>
 
 ## 利用方法
