@@ -29,18 +29,6 @@ const props = withDefaults(
     }
 )
 
-// ref
-const canvasWrapperRef: Ref<HTMLDivElement | undefined> = ref<HTMLDivElement>()
-const mainCanvasRef: Ref<HTMLCanvasElement | undefined> = ref<HTMLCanvasElement>()
-const shadowCanvasRef: Ref<HTMLCanvasElement | undefined> = ref<HTMLCanvasElement>()
-const resultCanvasRef: Ref<HTMLCanvasElement | undefined> = ref<HTMLCanvasElement>()
-
-// 画像
-const image = new Image()
-
-// 対応fileType
-const fileTypes = ['png', 'jpeg', 'jpg', 'bmp']
-
 watch(
     () => [
         props.width,
@@ -59,20 +47,33 @@ watch(
 onMounted(() => {
     // マウント時の処理
     setProps()
-    canvasWrapperRef.value!.style.position = 'relative'
-    mainCanvasRef.value!.style.position = 'absolute'
-    mainCanvasRef.value!.style.left = '0'
-    mainCanvasRef.value!.style.top = '0'
-    shadowCanvasRef.value!.style.position = 'absolute'
-    shadowCanvasRef.value!.style.left = '0'
-    shadowCanvasRef.value!.style.top = '0'
-    resultCanvasRef.value!.style.display = 'none'
 })
+
+// ref
+const canvasWrapperRef: Ref<HTMLDivElement | undefined> = ref<HTMLDivElement>()
+const mainCanvasRef: Ref<HTMLCanvasElement | undefined> = ref<HTMLCanvasElement>()
+const shadowCanvasRef: Ref<HTMLCanvasElement | undefined> = ref<HTMLCanvasElement>()
+const resultCanvasRef: Ref<HTMLCanvasElement | undefined> = ref<HTMLCanvasElement>()
+
+// 画像
+const image = new Image()
+
+// 対応fileType
+const fileTypes = ['png', 'jpeg', 'jpg', 'bmp']
+
+const scalMax = 4000 // 画像拡大、縮小の最大値
+const scalMin = 30 // 画像拡大、縮小の最小値
+const onwheelMag = 0.3 // マウスホイールイベントの画像サイズ変更への適用の際の倍率
+const fitScalRange = 5 // 画像切り取り領域の端に近いときピッタリ合わせる時の範囲指定
+const fitLineRange = 5 // 画像切り取り領域のサイズに近いときピッタリ合わせる時の範囲指定
 
 let magnification = 0 // 拡大率
 let targetX = 0 // 画像の位置
 let targetY = 0
 let scal = 0 // 拡大率
+let beforeDistance = 0 // タッチデバイスでのピンチ動作の際の、2点間の距離
+let pinciFlag = false // ピンチ操作をしているかどうか
+let timeoutId: ReturnType<typeof setTimeout>
 
 const setProps = () => {
     // propsで変わるCSSをここで定義
@@ -157,61 +158,112 @@ const loadImg = (getImage: Blob | File) => {
     let startY = 0
     // キャンバスの操作イベントを追加する
     // mainCanvasの上にshadowCanvasを重ねているので、イベントを追加するのはshadowCanvas
+
     // canvas ドラッグ開始
     shadowCanvasRef.value!.ontouchstart = function (event) {
         mouse_down = true
+        pinciFlag = false
+        // 指1本で行っている場合（移動）
         startX = event.changedTouches[0].pageX // ドラッグ開始位置を格納
         startY = event.changedTouches[0].pageY
         return false
     }
     shadowCanvasRef.value!.onmousedown = function (event) {
         mouse_down = true
-        startX = event.pageX // ドラッグ開始位置を格納
-        startY = event.pageY
+        if (!pinciFlag) {
+            startX = event.pageX // ドラッグ開始位置を格納
+            startY = event.pageY
+        }
         return false
     }
-    // canvas ドラッグ終了
-    shadowCanvasRef.value!.ontouchend = function (event) {
+
+    // canvas ドラッグ中
+    shadowCanvasRef.value!.onmousemove = function (event) {
         if (mouse_down === false) return
-        mouse_down = false
-        updateCanvas(
-            (targetX += (startX - event.changedTouches[0].pageX) / magnification),
-            (targetY += (startY - event.changedTouches[0].pageY) / magnification)
-        ) // 描画
+        if (!pinciFlag) {
+            updateCanvas(targetX + (startX - event.pageX) / magnification, targetY + (startY - event.pageY) / magnification) // 描画
+        }
         return false
     }
+    shadowCanvasRef.value!.ontouchmove = function (event) {
+        if (mouse_down === false) return
+        if (event.changedTouches.length > 1) {
+            pinciFlag = true
+            // 指2本で行っている場合（拡大、縮小）
+            // 座標1 (1本目の指)
+            const startX_1 = event.changedTouches[0].pageX
+            const startY_1 = event.changedTouches[0].pageY
+            // 座標2 (2本目の指)
+            const startX_2 = event.changedTouches[1].pageX
+            const startY_2 = event.changedTouches[1].pageY
+
+            // 2点間の距離
+            const movedDistance = Math.sqrt(Math.pow(startX_2 - startX_1, 2) + Math.pow(startY_2 - startY_1, 2))
+
+            clearTimeout(timeoutId)
+            if (beforeDistance) {
+                const pinchMove = 1 + (movedDistance / beforeDistance - 1) / 8
+                if (pinchMove && pinchMove != Infinity) {
+                    let newScal = scal * pinchMove
+                    if (newScal < scalMin) newScal = scalMin // 拡大の最小値
+                    if (newScal > scalMax) newScal = scalMax // 拡大の最大値
+                    scaling(null, newScal) // 画面への拡大率反映
+                }
+                timeoutId = setTimeout(function () {
+                    beforeDistance = 0
+                }, 50)
+            } else {
+                beforeDistance = movedDistance
+            }
+        } else {
+            // 指1本で行っている場合（移動）
+            // ピンチ操作を行っていない場合のみ動かす
+            if (!pinciFlag) {
+                updateCanvas(
+                    targetX + (startX - event.changedTouches[0].pageX) / magnification,
+                    targetY + (startY - event.changedTouches[0].pageY) / magnification
+                ) // 描画
+            }
+        }
+        return false
+    }
+
+    // canvas ドラッグ終了
     shadowCanvasRef.value!.onmouseout = function (event) {
         if (mouse_down === false) return
         mouse_down = false
-        updateCanvas((targetX += (startX - event.pageX) / magnification), (targetY += (startY - event.pageY) / magnification)) // 描画
+        if (!pinciFlag) {
+            updateCanvas((targetX += (startX - event.pageX) / magnification), (targetY += (startY - event.pageY) / magnification)) // 描画
+        }
         return false
     }
     shadowCanvasRef.value!.onmouseup = function (event) {
         if (mouse_down === false) return
         mouse_down = false
-        updateCanvas((targetX += (startX - event.pageX) / magnification), (targetY += (startY - event.pageY) / magnification)) // 描画
+        if (!pinciFlag) {
+            updateCanvas((targetX += (startX - event.pageX) / magnification), (targetY += (startY - event.pageY) / magnification)) // 描画
+        }
         return false
     }
-    // canvas ドラッグ中
-    shadowCanvasRef.value!.ontouchmove = function (event) {
+    shadowCanvasRef.value!.ontouchend = function (event) {
         if (mouse_down === false) return
-        updateCanvas(
-            targetX + (startX - event.changedTouches[0].pageX) / magnification,
-            targetY + (startY - event.changedTouches[0].pageY) / magnification
-        ) // 描画
+        if (pinciFlag) {
+            beforeDistance = 0
+        } else {
+            updateCanvas(
+                (targetX += (startX - event.changedTouches[0].pageX) / magnification),
+                (targetY += (startY - event.changedTouches[0].pageY) / magnification)
+            ) // 描画
+        }
         return false
     }
-    shadowCanvasRef.value!.onmousemove = function (event) {
-        if (mouse_down === false) return
-        updateCanvas(targetX + (startX - event.pageX) / magnification, targetY + (startY - event.pageY) / magnification) // 描画
-        return false
-    }
+
     // canvas ホイールで拡大縮小
     shadowCanvasRef.value!.onwheel = function (event) {
         // 現在の拡大率にマウスホイールの操作値を加える
-        let newScal = scal + event.deltaY * 0.1
-        if (newScal < 30) newScal = 30 // 拡大の最小値
-        if (newScal > 4000) newScal = 4000 // 拡大の最大値
+        let newScal = scal + event.deltaY * onwheelMag
+        if (newScal < scalMin) newScal = scalMin // 拡大の最小値
+        if (newScal > scalMax) newScal = scalMax // 拡大の最大値
         scaling(null, newScal) // 画面への拡大率反映
         return false
     }
@@ -225,10 +277,10 @@ const scaling = (_event: null, newValue: number) => {
     const widthAbs = Math.abs((props.resultWidth * 1000) / image.width - newValue)
     const heightAbs = Math.abs((props.resultHeight * 1000) / image.height - newValue)
     // 枠にピッタリに近いサイズのときにはぴったりに揃える
-    if (props.fitScal && widthAbs < 5 && widthAbs < heightAbs) {
-        magnification = ((props.resultWidth * 1000) / image.width) * 0.001
-    } else if (props.fitScal && heightAbs < 5) {
-        magnification = ((props.resultHeight * 1000) / image.height) * 0.001
+    if (props.fitScal && widthAbs < fitScalRange && widthAbs < heightAbs) {
+        magnification = props.resultWidth / image.width
+    } else if (props.fitScal && heightAbs < fitScalRange) {
+        magnification = props.resultHeight / image.height
     } else {
         magnification = newValue * 0.001
     }
@@ -252,16 +304,16 @@ const updateCanvas = (x: number, y: number) => {
     const cropEndY = Math.round(cropStartY + props.resultHeight)
     // 表示している画像の端が画像切り取り領域の端に近いときピッタリ合わせる
     if (props.fitLine) {
-        if (Math.abs(mainEndX - cropEndX) < 5 && Math.abs(mainEndX - cropEndX) < Math.abs(mainStartX - cropStartX)) {
+        if (Math.abs(mainEndX - cropEndX) < fitLineRange && Math.abs(mainEndX - cropEndX) < Math.abs(mainStartX - cropStartX)) {
             mainStartX += cropEndX - mainEndX
         }
-        if (Math.abs(mainEndY - cropEndY) < 5 && Math.abs(mainEndY - cropEndY) < Math.abs(mainStartY - cropStartY)) {
+        if (Math.abs(mainEndY - cropEndY) < fitLineRange && Math.abs(mainEndY - cropEndY) < Math.abs(mainStartY - cropStartY)) {
             mainStartY += cropEndY - mainEndY
         }
-        if (Math.abs(mainStartX - cropStartX) < 5 && Math.abs(mainStartX - cropStartX) <= Math.abs(mainEndX - cropEndX)) {
+        if (Math.abs(mainStartX - cropStartX) < fitLineRange && Math.abs(mainStartX - cropStartX) <= Math.abs(mainEndX - cropEndX)) {
             mainStartX = cropStartX
         }
-        if (Math.abs(mainStartY - cropStartY) < 5 && Math.abs(mainStartY - cropStartY) <= Math.abs(mainEndY - cropEndY)) {
+        if (Math.abs(mainStartY - cropStartY) < fitLineRange && Math.abs(mainStartY - cropStartY) <= Math.abs(mainEndY - cropEndY)) {
             mainStartY = cropStartY
         }
     }
@@ -334,11 +386,16 @@ defineExpose({
 </script>
 
 <template>
-    <div ref="canvasWrapperRef" class="canvasWrapper">
-        <canvas ref="mainCanvasRef" class="mainCanvas"></canvas>
-        <canvas ref="shadowCanvasRef" class="shadowCanvas"></canvas>
+    <div ref="canvasWrapperRef" class="canvasWrapper" style="position: relative">
+        <canvas ref="mainCanvasRef" class="mainCanvas" style="position: absolute; left: 0; top: 0"></canvas>
+        <canvas ref="shadowCanvasRef" class="shadowCanvas" style="position: absolute; left: 0; top: 0"></canvas>
     </div>
-    <canvas id="resultCanvas" ref="resultCanvasRef" class="resultCanvas" :width="props.resultWidth" :height="props.resultHeight"></canvas>
+    <canvas
+        id="resultCanvas"
+        ref="resultCanvasRef"
+        class="resultCanvas"
+        :width="props.resultWidth"
+        :height="props.resultHeight"
+        style="display: none"
+    ></canvas>
 </template>
-
-<style scoped></style>

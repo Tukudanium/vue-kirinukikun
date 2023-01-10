@@ -1,6 +1,6 @@
 <script setup lang="ts">
-//import { kirinukikun } from 'vue-kirinukikun'
-import kirinukikun from './components/kirinukikun.vue'
+import { kirinukikun } from 'vue-kirinukikun'
+//import kirinukikun from './components/kirinukikun.vue'
 import { Ref, ref } from 'vue'
 
 const kirinukiRef = ref()
