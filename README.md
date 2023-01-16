@@ -37,9 +37,11 @@ script
 const kirinukiRef = ref()
 
 // 画像の読み込み例
-const loadImg = (event: any) => {
-    const file = event.target.files[0]
-    kirinukiRef.value.loadImg(file)
+const loadImg = (event: Event) => {
+    if (event.target instanceof HTMLInputElement && event.target.files) {
+        const file = event.target.files[0]
+        kirinukiRef.value.loadImg(file)
+    }
     return
 }
 
