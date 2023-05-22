@@ -1,6 +1,5 @@
-<!-- eslint-disable @typescript-eslint/no-non-null-assertion -->
 <script setup lang="ts">
-import { onMounted, Ref, ref, StyleValue, watch } from 'vue'
+import { onMounted, Ref, ref, watch } from 'vue'
 
 const props = withDefaults(
     defineProps<{
@@ -76,24 +75,26 @@ let pinciFlag = false // ピンチ操作をしているかどうか
 let timeoutId: ReturnType<typeof setTimeout>
 
 const setProps = () => {
+    if (!canvasWrapperRef.value || !mainCanvasRef.value || !shadowCanvasRef.value || !resultCanvasRef.value || !shadowCanvasRef.value) return
     // propsで変わるCSSをここで定義
-    canvasWrapperRef.value!.style.width = props.width + 'px'
-    canvasWrapperRef.value!.style.height = props.height + 'px'
-    canvasWrapperRef.value!.style.backgroundColor = props.backgroundColor
-    mainCanvasRef.value!.style.width = props.width + 'px'
-    mainCanvasRef.value!.style.height = props.height + 'px'
-    shadowCanvasRef.value!.style.width = props.width + 'px'
-    shadowCanvasRef.value!.style.height = props.height + 'px'
-    resultCanvasRef.value!.style.width = props.resultWidth + 'px'
-    resultCanvasRef.value!.style.height = props.resultHeight + 'px'
+    canvasWrapperRef.value.style.width = props.width + 'px'
+    canvasWrapperRef.value.style.height = props.height + 'px'
+    canvasWrapperRef.value.style.backgroundColor = props.backgroundColor
+    mainCanvasRef.value.style.width = props.width + 'px'
+    mainCanvasRef.value.style.height = props.height + 'px'
+    shadowCanvasRef.value.style.width = props.width + 'px'
+    shadowCanvasRef.value.style.height = props.height + 'px'
+    resultCanvasRef.value.style.width = props.resultWidth + 'px'
+    resultCanvasRef.value.style.height = props.resultHeight + 'px'
 
-    mainCanvasRef.value!.width = props.width
-    mainCanvasRef.value!.height = props.height
-    shadowCanvasRef.value!.width = props.width
-    shadowCanvasRef.value!.height = props.height
+    mainCanvasRef.value.width = props.width
+    mainCanvasRef.value.height = props.height
+    shadowCanvasRef.value.width = props.width
+    shadowCanvasRef.value.height = props.height
 
     // 影をつけるキャンバス
-    const shadowCtx: CanvasRenderingContext2D = shadowCanvasRef.value!.getContext('2d')!
+    const shadowCtx: CanvasRenderingContext2D | null = shadowCanvasRef.value.getContext('2d')
+    if (!shadowCtx) return
     let shadowColor = props.shadowColor
     if (shadowColor[0] === '#') {
         shadowColor =
@@ -146,11 +147,13 @@ image.onload = () => {
 
 // 画像受け取り
 const loadImg = (getImage: Blob | File) => {
+    if (!shadowCanvasRef.value) return
     getImage.type
     // imageオブジェクトに読み込む
     const reader = new FileReader()
     reader.onload = function (e) {
-        image.src = String(e.target!.result)
+        if (!e.target) return
+        image.src = String(e.target.result)
     }
     reader.readAsDataURL(getImage)
     let mouse_down = false // canvas ドラッグ中フラグ
@@ -160,7 +163,7 @@ const loadImg = (getImage: Blob | File) => {
     // mainCanvasの上にshadowCanvasを重ねているので、イベントを追加するのはshadowCanvas
 
     // canvas ドラッグ開始
-    shadowCanvasRef.value!.ontouchstart = function (event) {
+    shadowCanvasRef.value.ontouchstart = function (event) {
         mouse_down = true
         pinciFlag = false
         // 指1本で行っている場合（移動）
@@ -168,7 +171,7 @@ const loadImg = (getImage: Blob | File) => {
         startY = event.changedTouches[0].pageY
         return false
     }
-    shadowCanvasRef.value!.onmousedown = function (event) {
+    shadowCanvasRef.value.onmousedown = function (event) {
         mouse_down = true
         if (!pinciFlag) {
             startX = event.pageX // ドラッグ開始位置を格納
@@ -178,14 +181,14 @@ const loadImg = (getImage: Blob | File) => {
     }
 
     // canvas ドラッグ中
-    shadowCanvasRef.value!.onmousemove = function (event) {
+    shadowCanvasRef.value.onmousemove = function (event) {
         if (mouse_down === false) return
         if (!pinciFlag) {
             updateCanvas(targetX + (startX - event.pageX) / magnification, targetY + (startY - event.pageY) / magnification) // 描画
         }
         return false
     }
-    shadowCanvasRef.value!.ontouchmove = function (event) {
+    shadowCanvasRef.value.ontouchmove = function (event) {
         if (mouse_down === false) return
         if (event.changedTouches.length > 1) {
             pinciFlag = true
@@ -229,7 +232,7 @@ const loadImg = (getImage: Blob | File) => {
     }
 
     // canvas ドラッグ終了
-    shadowCanvasRef.value!.onmouseout = function (event) {
+    shadowCanvasRef.value.onmouseout = function (event) {
         if (mouse_down === false) return
         mouse_down = false
         if (!pinciFlag) {
@@ -237,7 +240,7 @@ const loadImg = (getImage: Blob | File) => {
         }
         return false
     }
-    shadowCanvasRef.value!.onmouseup = function (event) {
+    shadowCanvasRef.value.onmouseup = function (event) {
         if (mouse_down === false) return
         mouse_down = false
         if (!pinciFlag) {
@@ -245,7 +248,7 @@ const loadImg = (getImage: Blob | File) => {
         }
         return false
     }
-    shadowCanvasRef.value!.ontouchend = function (event) {
+    shadowCanvasRef.value.ontouchend = function (event) {
         if (mouse_down === false) return
         if (pinciFlag) {
             beforeDistance = 0
@@ -259,7 +262,7 @@ const loadImg = (getImage: Blob | File) => {
     }
 
     // canvas ホイールで拡大縮小
-    shadowCanvasRef.value!.onwheel = function (event) {
+    shadowCanvasRef.value.onwheel = function (event) {
         // 現在の拡大率にマウスホイールの操作値を加える
         let newScal = scal + event.deltaY * onwheelMag
         if (newScal < scalMin) newScal = scalMin // 拡大の最小値
@@ -288,9 +291,11 @@ const scaling = (_event: null, newValue: number) => {
 }
 // 画像更新
 const updateCanvas = (x: number, y: number) => {
+    if (!mainCanvasRef.value) return
     // 画像が入ってないならキャンセル
     if (!image.src) return null
-    const mainCtx: CanvasRenderingContext2D = mainCanvasRef.value!.getContext('2d')!
+    const mainCtx: CanvasRenderingContext2D | null = mainCanvasRef.value.getContext('2d')
+    if (!mainCtx) return
     // 背景を塗る
     mainCtx.clearRect(0, 0, props.width, props.height)
     // 画像描画の開始、終了位置を計算
@@ -332,10 +337,13 @@ const updateCanvas = (x: number, y: number) => {
 }
 // 画像切り取り
 const cropImg = async (returnType: string | 'file', fileType: string | 'png') => {
+    if (!mainCanvasRef.value || !resultCanvasRef.value) return
     // 画像が入ってないならキャンセル
     if (!image.src) return null
-    const mainCtx: CanvasRenderingContext2D = mainCanvasRef.value!.getContext('2d')!
-    const ctx: CanvasRenderingContext2D = resultCanvasRef.value!.getContext('2d')!
+    const mainCtx: CanvasRenderingContext2D | null = mainCanvasRef.value.getContext('2d')
+    const ctx: CanvasRenderingContext2D | null = resultCanvasRef.value.getContext('2d')
+    if (!mainCtx) return
+    if (!ctx) return
     // 前に描画した分を削除
     ctx.clearRect(0, 0, props.resultWidth, props.resultHeight)
     const cropStartX = (props.width - props.resultWidth) / 2 // 画像切り取りを行う開始位置
@@ -353,7 +361,7 @@ const cropImg = async (returnType: string | 'file', fileType: string | 'png') =>
     } else mimeType += 'png'
 
     // propsで指定した形式でemitした関数にデータを返却
-    const dataurl = resultCanvasRef.value!.toDataURL(mimeType) // DataURLに変換
+    const dataurl = resultCanvasRef.value.toDataURL(mimeType) // DataURLに変換
     if (returnType === 'dataurl') return dataurl
 
     // const bin = Buffer.from(dataurl.split(',')[1], 'base64').toString('base64')
@@ -386,16 +394,9 @@ defineExpose({
 </script>
 
 <template>
-    <div ref="canvasWrapperRef" class="canvasWrapper" style="position: relative">
-        <canvas ref="mainCanvasRef" class="mainCanvas" style="position: absolute; left: 0; top: 0"></canvas>
-        <canvas ref="shadowCanvasRef" class="shadowCanvas" style="position: absolute; left: 0; top: 0"></canvas>
+    <div ref="canvasWrapperRef" style="position: relative">
+        <canvas ref="mainCanvasRef" style="position: absolute; left: 0; top: 0"></canvas>
+        <canvas ref="shadowCanvasRef" style="position: absolute; left: 0; top: 0"></canvas>
     </div>
-    <canvas
-        id="resultCanvas"
-        ref="resultCanvasRef"
-        class="resultCanvas"
-        :width="props.resultWidth"
-        :height="props.resultHeight"
-        style="display: none"
-    ></canvas>
+    <canvas ref="resultCanvasRef" :width="props.resultWidth" :height="props.resultHeight" style="display: none"></canvas>
 </template>
