@@ -14,7 +14,7 @@ DEMO: <https://oru5oj.csb.app/>
 ## 開発者向け
 
 src/配下のREADMEに記載しています。
-[開発者向け情報](.\src\README.md)
+[開発者向け情報](/src/README.md)
 
 ## 利用方法
 
