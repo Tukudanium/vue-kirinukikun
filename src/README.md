@@ -3,7 +3,7 @@
 viteのライブラリモードを利用してのコンポーネントライブラリの開発・公開についての説明。
 Viteのライブラリモードについては下記記事を参照してください。
 
-[Vue3 + vite + TypeScriptで作ったコンポーネントをnpmに公開してみる](https://qiita.com/Tukudanium/items/d429aca28619026c67a3>)
+[Vue3 + vite + TypeScriptで作ったコンポーネントをnpmに公開してみる](https://qiita.com/Tukudanium/items/d429aca28619026c67a3)
 
 ## 環境
 
